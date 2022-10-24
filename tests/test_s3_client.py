@@ -28,6 +28,13 @@ def bucket_name() -> str:
     return get_unique_bucket_name()
 
 
+def test_default_auth_boto3_client() -> None:
+    access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+    secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+    client = S3.default_boto3_client_init(aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
+    assert client.get_list_of_buckets() is not None
+
+
 def test_create_bucket(s3_client: S3, bucket_name: str) -> None:
     s3_client.create_bucket(bucket_name)
     assert s3_client.does_bucket_exist(bucket_name)
@@ -46,7 +53,7 @@ def test_download_file(s3_client: S3, bucket_name: str, tmp_path: Path) -> None:
 def test_generate_download_link_for_file(s3_client: S3, bucket_name: str) -> None:
     url = s3_client.generate_download_link_for_file(bucket_name, TEST_FILENAME)
     response = requests.get(url)
-    # b'This is a test file for aws s3 utils.\n' is the conents of the test.txt file
+    # b'This is a test file for aws s3 utils.\n' is the contents of the test.txt file
     assert b"This is a test file for aws s3 utils.\n" in response.content
 
 

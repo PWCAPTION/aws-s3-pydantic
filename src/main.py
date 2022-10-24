@@ -1,31 +1,48 @@
 import os
-from typing import Optional, List
-from pydantic import SecretStr
-from pydantic.dataclasses import dataclass
+from typing import Optional, List, Any, TypeVar
+from pydantic import BaseModel
 import boto3
 from pathlib import Path
 
+boto3.Session
+T = TypeVar("T")
 
-@dataclass
-class S3:
-    region: Optional[str] = None
-    access_key_id: Optional[SecretStr] = None
-    secret_access_key: Optional[SecretStr] = None
 
-    def __post_init__(self):
-        if os.getenv("AWS_ACCESS_KEY_ID") is None or "":
-            raise Exception("AWS_ACCESS_KEY_ID env var is not set.")
-        if os.getenv("AWS_SECRET_ACCESS_KEY") is None or "":
-            raise Exception("AWS_SECRET_ACCESS_KEY env var is not set.")
-        self.s3_client = boto3.client("s3")
+class S3(BaseModel):
+    s3_client: T = None
 
-    def get_s3_client(self):
+    def __init__(self, **data):
+        super().__init__(**data)
+
+        if self.s3_client is None:
+            if os.getenv("AWS_ACCESS_KEY_ID") is None or "":
+                raise Exception("AWS_ACCESS_KEY_ID env var is not set.")
+            if os.getenv("AWS_SECRET_ACCESS_KEY") is None or "":
+                raise Exception("AWS_SECRET_ACCESS_KEY env var is not set.")
+            self.s3_client = boto3.client("s3")
+
+    @classmethod
+    def default_boto3_client_init(cls, **kwargs) -> "S3":
+        """
+        configuring boto3 credentials:\n
+        https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials\n
+        boto3 client function:\n
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/core/boto3.html#boto3.client
+        """
+        s3_client = boto3.client("s3", **kwargs)
+        return cls(s3_client=s3_client)
+
+    def get_s3_client(self) -> T:
+        """
+        docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html\n
+        :return: Boto3 Client
+        """
         return self.s3_client
 
     def does_bucket_exist(self, bucket_name: str) -> bool:
         """
-        :param bucket_name: str -- bucket name you would like to check if exists
-        :returns boolean
+        :param bucket_name: str -- bucket name you would like to check if exists\n
+        :return: boolean
         """
         list_of_buckets = self.get_list_of_buckets()
         return bucket_name in list_of_buckets
@@ -34,7 +51,8 @@ class S3:
         """
         :param bucket_name: str -- s3 bucket you would like to access
         :param local_filepath: str -- save down filepath location
-        :param remote_filepath: str -- filepath to the file inside the s3 bucket
+        :param remote_filepath: str -- filepath to the file inside the s3 bucket\n
+        docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.download_file
         """
 
         # The filepaths are cast to strings in case they are passed in as a pathlib.Path class.
@@ -44,27 +62,30 @@ class S3:
         """
         :param bucket_name: str -- s3 bucket you would like to access
         :param local_filepath: str -- filepath of the file on your machine you would like to upload
-        :param remote_filepath: str -- filepath to location you would like to upload to inside the s3 bucket
+        :param remote_filepath: str -- filepath to location you would like to upload to inside the s3 bucket\n
+        docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.upload_file
         """
         self.s3_client.upload_file(local_filepath, bucket_name, remote_filepath)
 
     def delete_file(self, bucket_name: str, remote_filepath: str) -> None:
         """
         :param bucket_name: str -- s3 bucket you would like to access
-        :param remote_filepath: str -- filepath to the file you would like to delete inside the s3 bucket
+        :param remote_filepath: str -- filepath to the file you would like to delete inside the s3 bucket\n
+        docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.delete_object
         """
         self.s3_client.delete_object(Bucket=bucket_name, Key=remote_filepath)
 
     def get_file_list(self, bucket_name: str) -> List[str] | List:
         """
         :param bucket_name: str -- s3 bucket you would like to access
-        :returns list of files or empty list if bucket is empty
+        :return: List[str] or empty list [] if bucket is empty\n
+        docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.list_objects_v2
         """
         file_list = []
         try:
             # if Contents key does not exist, key error is thrown and signifies that
             # the bucket is empty.
-            s3_files = self.s3_client.list_objects(Bucket=bucket_name)["Contents"]
+            s3_files = self.s3_client.list_objects_v2(Bucket=bucket_name)["Contents"]
         except KeyError as e:
             return file_list
         for key in s3_files:
@@ -73,8 +94,10 @@ class S3:
 
     def get_list_of_buckets(self) -> List[str]:
         """
-        return list of all buckets in s3\n
-        s3 docs -- https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.list_buckets
+        Grab list of all buckets in s3
+
+        :return: List[str]\n
+        docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.list_buckets
         """
         response = self.s3_client.list_buckets()
         bucket_list = []
@@ -86,8 +109,8 @@ class S3:
         """
         :param bucket_name: str -- bucket name you would like to create
         (bucket_name requires all lowercase and no special characters. Example: 'testing.bucket')
-        :parm location: str -- aws region for bucket configuration. Example: 'us-east-1'
-        :s3 docs -- https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.create_bucket
+        :param location: str -- aws region for bucket configuration. Example: 'us-east-1'\n
+        docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.create_bucket
         """
         if location:
             self.s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": location})
@@ -96,7 +119,8 @@ class S3:
 
     def delete_bucket(self, bucket_name: str) -> None:
         """
-        :param bucket_name: str -- bucket name you would like to delete
+        :param bucket_name: str -- bucket name you would like to delete\n
+        docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.delete_bucket
         """
         self.s3_client.delete_bucket(Bucket=bucket_name)
 
@@ -105,6 +129,8 @@ class S3:
         :param bucket_name: str -- s3 bucket you would like to access
         :param remote_filepath: str -- filepath inside the s3 bucket you would like to create downloadable url
         :param time_to_expiry: int -- time in seconds till link expires, default is 3600s (1 hour)
+        :return: str\n
+        docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.generate_presigned_url
         """
         url = self.s3_client.generate_presigned_url(
             ClientMethod="get_object",
