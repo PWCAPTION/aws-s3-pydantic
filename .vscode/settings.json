@@ -1,0 +1,29 @@
+{
+    "python.defaultInterpreterPath": "/Users/jeffgruenbaum/Library/Caches/pypoetry/virtualenvs/aws-s3-utils-zt1Wwmcp-py3.10/bin/python",
+    "python.analysis.extraPaths": [
+        "<path>"
+    ],
+    "python.envFile": "/Users/jeffgruenbaum/projects/Underlier-API/.env",
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true,
+    "python.formatting.blackArgs": [
+        "--line-length 120",
+        "120"
+    ],
+    "python.formatting.provider": "black",
+    "python.linting.flake8Args": [
+        "--max-line-length=120",
+        "--ignore=F811, F401"
+    ],
+    "python.poetryPath": "/opt/homebrew/bin/poetry",
+    "python.testing.pytestEnabled": true,
+    "editor.formatOnSave": true,
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        ".mypy_cache": true
+    },
+    "files.insertFinalNewline": true,
+    "workbench.preferredDarkColorTheme": "Default Dark+",
+    "workbench.iconTheme": "material-icon-theme"
+}
