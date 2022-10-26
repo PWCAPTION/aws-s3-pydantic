@@ -31,7 +31,7 @@ def bucket_name() -> str:
 def test_default_auth_boto3_client() -> None:
     access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
     secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-    client = S3.default_boto3_client_init(aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
+    client = S3.default_boto3_resource_init(aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
     assert client.get_list_of_buckets() is not None
 
 
@@ -43,6 +43,13 @@ def test_create_bucket(s3_client: S3, bucket_name: str) -> None:
 def test_upload_file(s3_client: S3, bucket_name: str) -> None:
     s3_client.upload_file(bucket_name, TEST_FILENAME, TEST_FILENAME)
     assert TEST_FILENAME in s3_client.get_file_list(bucket_name)
+
+
+def test_get_file_list_by_dir(s3_client: S3, bucket_name: str):
+    s3_client.upload_file(bucket_name, TEST_FILENAME, "test_dir/" + TEST_FILENAME)
+    assert ["test_dir/test.txt"] == s3_client.get_file_list_by_dir(bucket_name, "test_dir/")
+    s3_client.delete_file(bucket_name, "test_dir/" + TEST_FILENAME)
+    assert [] == s3_client.get_file_list_by_dir(bucket_name, "test_dir/")
 
 
 def test_download_file(s3_client: S3, bucket_name: str, tmp_path: Path) -> None:
@@ -72,7 +79,7 @@ def test_delete_bucket(s3_client: S3, bucket_name: str) -> None:
     assert not s3_client.does_bucket_exist(bucket_name)
 
 
-def test_create_and_delete_bucket_with_location(s3_client: S3, bucket_name: str) -> None:
+def test_create_and_delete_bucket_with_location(s3_client: S3) -> None:
     bucket_name = get_unique_bucket_name()
     s3_client.create_bucket(bucket_name, location="us-west-1")
     assert s3_client.does_bucket_exist(bucket_name)
