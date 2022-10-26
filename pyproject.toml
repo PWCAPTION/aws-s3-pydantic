@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aws_s3_pydantic"
-version = "0.0.1"
+version = "0.0.3"
 description = ""
 authors = ["Jeff Gruenbaum <jgruenbaum@captionpartners.com>"]
 readme = "README.md"
