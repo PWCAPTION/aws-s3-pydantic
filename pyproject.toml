@@ -1,8 +1,13 @@
 [tool.poetry]
-name = "aws-s3-utils"
-version = "0.1.0"
-description = "A Python project"
-authors = ["Your Name <you@example.com>"]
+name = "aws-s3-pydantic"
+version = "0.0.1"
+description = ""
+authors = ["Jeff Gruenbaum <jgruenbaum@captionpartners.com>"]
+readme = "README.md"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10.4",
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
