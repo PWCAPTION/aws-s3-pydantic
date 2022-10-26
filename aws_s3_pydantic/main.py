@@ -2,14 +2,19 @@ import os
 from typing import Optional, List, Any, TypeVar
 from pydantic import BaseModel
 import boto3
+from boto3.resources.base import ServiceResource
 from pathlib import Path
 
-boto3.Session
+
 T = TypeVar("T")
 
 
 class S3(BaseModel):
+    s3_resource: ServiceResource = None
     s3_client: T = None
+
+    class Config:
+        arbitrary_types_allowed = True
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -19,18 +24,26 @@ class S3(BaseModel):
                 raise Exception("AWS_ACCESS_KEY_ID env var is not set.")
             if os.getenv("AWS_SECRET_ACCESS_KEY") is None or "":
                 raise Exception("AWS_SECRET_ACCESS_KEY env var is not set.")
-            self.s3_client = boto3.client("s3")
+            self.s3_resource = boto3.resource("s3")
+            self.s3_client = self.s3_resource.meta.client
 
     @classmethod
-    def default_boto3_client_init(cls, **kwargs) -> "S3":
+    def default_boto3_resource_init(cls, **kwargs) -> "S3":
         """
         configuring boto3 credentials:\n
         https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials\n
         boto3 client function:\n
         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/core/boto3.html#boto3.client
         """
-        s3_client = boto3.client("s3", **kwargs)
-        return cls(s3_client=s3_client)
+        s3_resource = boto3.resource("s3", **kwargs)
+        s3_client = s3_resource.meta.client
+        return cls(s3_resource=s3_resource, s3_client=s3_client)
+
+    def get_s3_resource(self) -> ServiceResource:
+        """
+        :return: Boto3 ServiceResource
+        """
+        return self.s3_resource
 
     def get_s3_client(self) -> T:
         """
@@ -90,6 +103,15 @@ class S3(BaseModel):
             return file_list
         for key in s3_files:
             file_list.append(key["Key"])
+        return file_list
+
+    def get_file_list_by_dir(self, bucket_name: str, directory_prefix: str) -> List[str] | List:
+        # s3 = boto3.resource('s3')
+        my_bucket = self.s3_resource.Bucket(bucket_name)
+
+        file_list = []
+        for object_summary in my_bucket.objects.filter(Prefix=directory_prefix):
+            file_list.append(object_summary.key)
         return file_list
 
     def get_list_of_buckets(self) -> List[str]:
