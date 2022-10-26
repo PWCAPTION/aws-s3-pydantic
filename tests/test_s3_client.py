@@ -1,6 +1,6 @@
 import os
 from pytest import fixture
-from src.main import S3
+from aws_s3_pydantic.main import S3
 from pathlib import Path
 from datetime import datetime
 import requests

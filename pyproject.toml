@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "aws-s3-pydantic"
+name = "aws_s3_pydantic"
 version = "0.0.1"
 description = ""
 authors = ["Jeff Gruenbaum <jgruenbaum@captionpartners.com>"]
