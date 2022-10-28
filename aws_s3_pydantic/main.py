@@ -88,6 +88,14 @@ class S3(BaseModel):
         """
         self.s3_client.delete_object(Bucket=bucket_name, Key=remote_filepath)
 
+    def get_list_of_objects_by_storage_type(self, bucket_name: str, directory_prefix: str, storage_class="STANDARD"):
+        my_bucket = self.s3_resource.Bucket(bucket_name)
+        file_list = []
+        for object_summary in my_bucket.objects.filter(Prefix=directory_prefix):
+            if object_summary.storage_class == storage_class:
+                file_list.append(object_summary.key)
+        return file_list
+
     def get_file_list(self, bucket_name: str) -> List[str] | List:
         """
         :param bucket_name: str -- s3 bucket you would like to access
