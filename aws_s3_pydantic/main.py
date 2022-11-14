@@ -60,7 +60,7 @@ class S3(BaseModel):
         list_of_buckets = self.get_list_of_buckets()
         return bucket_name in list_of_buckets
 
-    def download_file(self, bucket_name: str, local_filepath: str | Path, remote_filepath: str | Path) -> None:
+    def download_file(self, bucket_name: str, local_filepath: str, remote_filepath: str) -> None:
         """
         :param bucket_name: str -- s3 bucket you would like to access
         :param local_filepath: str -- save down filepath location
@@ -96,7 +96,7 @@ class S3(BaseModel):
                 file_list.append(object_summary.key)
         return file_list
 
-    def get_file_list(self, bucket_name: str) -> List[str] | List:
+    def get_file_list(self, bucket_name: str) -> List[str]:
         """
         :param bucket_name: str -- s3 bucket you would like to access
         :return: List[str] or empty list [] if bucket is empty\n
@@ -113,7 +113,7 @@ class S3(BaseModel):
             file_list.append(key["Key"])
         return file_list
 
-    def get_file_list_by_dir(self, bucket_name: str, directory_prefix: str) -> List[str] | List:
+    def get_file_list_by_dir(self, bucket_name: str, directory_prefix: str) -> List[str]:
         # s3 = boto3.resource('s3')
         my_bucket = self.s3_resource.Bucket(bucket_name)
 
