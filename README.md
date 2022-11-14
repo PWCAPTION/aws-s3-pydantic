@@ -3,7 +3,7 @@ A boto3 s3 client with better typing.
 
 # install
 ```
-poetry add git+https://github.com/PWCAPTION/aws-s3-pydantic.git#0.0.3
+poetry add git+https://github.com/PWCAPTION/aws-s3-pydantic.git#0.0.5
 ```
 
 # How to use
